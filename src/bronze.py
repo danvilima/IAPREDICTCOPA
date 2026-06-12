@@ -21,8 +21,7 @@ def main():
     df["home_score"] = df["home_score"].astype("Int64")
     df["away_score"] = df["away_score"].astype("Int64")
 
-    # Converter neutral para bool
-    df["neutral"] = df["neutral"].astype(bool)
+    # Conversão de bool será feita após renomear as colunas
 
     # Renomear colunas
     mapa_colunas = {
@@ -38,13 +37,32 @@ def main():
     }
     df = df.rename(columns=mapa_colunas)
 
+    # Converter neutro para bool seguro (após rename)
+    df["neutro"] = df["neutro"].map({
+        True: True,
+        False: False,
+        "TRUE": True,
+        "FALSE": False,
+        "True": True,
+        "False": False,
+        "true": True,
+        "false": False
+    })
+    
+    # Validar que não existem nulos em neutro
+    if df["neutro"].isnull().any():
+        raise ValueError("Existem valores nulos ou não mapeados na coluna neutro!")
+
     # 4. Imprimir inventário
     print("\n--- Inventário ---")
-    print(f"Total de linhas: {len(df)}")
-    print("\nTipos e nulos:")
-    inventario = pd.DataFrame(
-        {"Tipo": df.dtypes, "% Nulos": (df.isnull().sum() / len(df) * 100).round(2)}
-    )
+    print(f"Número de linhas: {len(df)}")
+    print("\nColunas e detalhes:")
+    inventario = pd.DataFrame({
+        "Nome da Coluna": df.columns,
+        "Tipo": df.dtypes.values,
+        "Qtd Nulos": df.isnull().sum().values,
+        "% Nulos": (df.isnull().sum() / len(df) * 100).round(2).values
+    }).set_index("Nome da Coluna")
     print(inventario)
     print("------------------\n")
 
